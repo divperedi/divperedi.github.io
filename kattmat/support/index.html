@@ -2,72 +2,462 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kattmat · Support</title>
 <style>
-  :root { color-scheme: light dark; --bg: #fdf8ec; --text: #2b2340; --muted: #6b6280; --link: #6a4fc2; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #221a33; --text: #f1ecfa; --muted: #b8aed0; --link: #c7b6ff; } }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 ui-rounded, -apple-system, system-ui, sans-serif; }
-  main { max-width: 40rem; margin: 0 auto; padding: 2rem 16px 4rem; }
-  h1 { font-size: 1.8rem; margin-bottom: .2rem; }
-  h2 { font-size: 1.15rem; margin-top: 2rem; }
+  /* One column on the app's ground: Ruby and her speech bubble on top, then plain sections. Cards only for what must be found first. Colours are the app's own (Assets.xcassets/Colors). */
+  :root {
+    color-scheme: light dark;
+    --ground-top: #fff4d6; --ground-mid: #f7f0ec; --ground-bottom: #ebebfb;
+    --ink: #231e33; --muted: #5d5873; --link: #5b47c2;
+    --card: rgba(255, 255, 255, .82); --tint: #e4e1f7; --ring: #b9b0ee;
+    --glow: 255 217 223; --bar: #fffdf7; --shadow: rgba(91, 71, 194, .13); --art-edge: rgba(241, 236, 255, 0);
+    --rounded: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root { --ground-top: #2b2234; --ground-mid: #221e33; --ground-bottom: #1e1b3b; --ink: #f3effb; --muted: #bdb5d6; --link: #c9beff; --card: rgba(46, 41, 69, .86); --tint: #3a3366; --ring: #6b60b3; --glow: 79 46 69; --bar: #2e2945; --shadow: rgba(0, 0, 0, .35); --art-edge: rgba(241, 236, 255, .85); } }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0; color: var(--ink); background-color: var(--ground-mid);
+    background-image: linear-gradient(180deg, var(--ground-top) 0%, var(--ground-mid) 46%, var(--ground-bottom) 100%);
+    background-attachment: fixed;
+    font: 1.0625rem/1.6 var(--rounded);
+  }
+  main { max-width: 41rem; margin: 0 auto; padding: 1.25rem max(16px, env(safe-area-inset-right)) 4rem max(16px, env(safe-area-inset-left)); }
+  a { color: var(--link); text-underline-offset: .18em; }
+  a:focus-visible { outline: 3px solid var(--link); outline-offset: 3px; border-radius: 6px; }
+  p, ul, ol { margin: 0 0 .85rem; }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+  h2 { font-size: 1.35rem; font-weight: 800; margin: 2.6rem 0 .7rem; }
+  h3 { font-size: 1.0625rem; font-weight: 800; margin: 1.4rem 0 .4rem; }
   .muted { color: var(--muted); }
-  a { color: var(--link); }
+  .pixel { image-rendering: pixelated; image-rendering: crisp-edges; filter: drop-shadow(0 0 1px var(--art-edge)); }
+
+  /* A slim, quiet bar across the window, on every screen size, that stays at the top while the page scrolls:
+     Kattmat's name at its left edge, the language switch (and the page's search) at its right edge, with a
+     small side padding, not held to the content column. */
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--bar); border-bottom: 1px solid var(--tint); }
+  .topbar-in { position: relative; display: flex; flex-flow: row nowrap; align-items: center; justify-content: space-between; gap: .5rem; min-height: 2.75rem; padding: .2rem max(22px, env(safe-area-inset-right)) .2rem max(22px, env(safe-area-inset-left)); }
+  .brand { flex: none; font-weight: 800; }
+  .menu { display: flex; flex-flow: row nowrap; align-items: center; gap: .25rem; }
+  .lang { margin: 0; font-size: .9375rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .lang strong { color: var(--ink); }
+  .lang a { display: inline-block; padding: .55rem .3rem; text-decoration: none; }
+  .lang a:hover { text-decoration: underline; }
+  .hero { display: flex; align-items: center; gap: .85rem; }
+  /* Ruby's glow: centred on her body, which sits left of the picture's middle (her tail takes the right), and eased out to nothing so it has no edge. */
+  .hero .art { position: relative; flex: none; width: 56px; height: 56px; isolation: isolate; }
+  .hero .art::before { content: ""; position: absolute; z-index: -1; left: 44%; top: 55%; width: 124px; height: 124px; transform: translate(-50%, -50%); pointer-events: none;
+    background: radial-gradient(closest-side, rgb(var(--glow) / .5), rgb(var(--glow) / .38) 30%, rgb(var(--glow) / .2) 55%, rgb(var(--glow) / .08) 75%, rgb(var(--glow) / .02) 90%, rgb(var(--glow) / 0)); }
+  .hero img { display: block; width: 56px; height: 56px; }
+  .hero div { flex: 1 1 auto; min-width: 0; }
+  .hero h1 { font-size: 1.75rem; }
+  .hero p { margin: .2rem 0 0; font-weight: 600; }
+
+  /* Ruby speaks: a card with a tail up towards her. */
+  .bubble { position: relative; background: var(--card); border-radius: 22px; padding: .85rem 1.1rem; margin: .9rem 0 0; box-shadow: 0 6px 18px var(--shadow); font-weight: 600; }
+  .bubble::before { content: ""; position: absolute; top: -9px; left: 19px; width: 18px; height: 18px; background: inherit; transform: rotate(45deg); border-radius: 4px 0 0 0; }
+  .bubble p:last-child, .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+  .card { background: var(--card); border-radius: 22px; padding: 1.1rem 1.2rem; margin: 1.1rem 0 0; box-shadow: 0 6px 18px var(--shadow); }
+  .card h2 { font-size: .8125rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 .4rem; }
+  .mail { display: inline-block; font-size: 1.3rem; font-weight: 800; overflow-wrap: anywhere; margin-bottom: .35rem; }
+
+  .toc { margin-top: 1.8rem; }
+  .toc h2 { font-size: .8125rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 .5rem; }
+  .toc ul { list-style: none; padding: 0; margin: 0; columns: 2 16rem; column-gap: 1.5rem; }
+  .toc li { break-inside: avoid; padding: .22rem 0; }
+  .toc a { font-weight: 700; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* The app's own button and menu names. */
+  b { font-weight: 800; }
+  b.ui { background: var(--tint); border-radius: .5em; padding: .06em .4em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  ul { padding-left: 1.25rem; }
+  li { margin: .35rem 0; }
+  ul li::marker { color: var(--ring); }
+  ul.prices { list-style: none; padding: 0; }
+  ul.prices li { background: var(--card); border-radius: 16px; padding: .6rem 1rem; margin: .5rem 0; }
+  ul.prices b { display: block; }
+  ol.steps { list-style: none; padding: 0; counter-reset: step; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 2.6rem; margin: .6rem 0; min-height: 1.9rem; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: -.05rem;
+    width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--tint); color: var(--link);
+    font-weight: 800; font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center;
+  }
+
+  footer { margin-top: 3.2rem; text-align: center; }
+  footer img { width: 128px; height: 128px; }
+  footer p { margin: .3rem 0; }
+  footer a { font-weight: 700; margin: 0 .5rem; white-space: nowrap; }
+
+  /* The search, which only the page's script adds: a magnifier in the bar opens a panel over the page,
+     under the bar at its right edge, so nothing on the page moves. Marks keep ink-on-highlight contrast in both themes. */
+  :root { --hit: #ffe08a; }
+  @media (prefers-color-scheme: dark) { :root { --hit: #6b5518; } }
+  [hidden] { display: none !important; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .search-toggle { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none; padding: 0; color: var(--ink); background: transparent; border: 0; border-radius: 999px; cursor: pointer; }
+  .search-toggle:hover, .search-toggle[aria-expanded="true"] { background: var(--tint); }
+  .search-toggle:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+  .search-toggle svg { pointer-events: none; }
+  .search-toggle .icon-close, .search-toggle[aria-expanded="true"] .icon-open { display: none; }
+  .search-toggle[aria-expanded="true"] .icon-close { display: block; }
+  .search-panel { position: absolute; z-index: 10; top: calc(100% + .4rem); right: max(22px, env(safe-area-inset-right)); width: min(32rem, calc(100% - 44px)); display: flex; flex-direction: column; max-height: min(70vh, 36rem); overflow: auto; padding: .9rem; background: var(--bar); border-radius: 18px; box-shadow: 0 10px 30px var(--shadow), 0 0 0 1px var(--tint); }
+  .search-panel input { width: 100%; min-height: 2.75rem; padding: .45rem 1rem; font: 600 1rem/1.3 var(--rounded); color: var(--ink); background: var(--card); border: 1.5px solid var(--ring); border-radius: 999px; }
+  .search-panel input::placeholder { color: var(--muted); opacity: 1; }
+  .search-panel input:focus { border-color: var(--link); outline: none; }
+  .search-panel input:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+  .search-status { margin: .6rem .3rem 0; color: var(--muted); font-size: .9375rem; font-weight: 700; }
+  .search-status:empty { display: none; }
+  .results { list-style: none; padding: 0; margin: .4rem 0 0; }
+  .results li { margin: 0; }
+  .results a { display: block; padding: .55rem .6rem; border-radius: 12px; color: var(--ink); text-decoration: none; }
+  .results a:hover, .results a:focus-visible { background: var(--tint); }
+  .results a:focus-visible { outline: 3px solid var(--link); outline-offset: 0; }
+  .results b { display: block; color: var(--link); }
+  .results span { display: block; color: var(--muted); font-size: .9375rem; }
+  mark.hit { background: var(--hit); color: var(--ink); border-radius: .25em; padding: 0 .1em; }
 </style>
 </head>
 <body>
+<nav class="topbar" aria-label="Kattmat">
+  <div class="topbar-in">
+    <span class="brand">Kattmat</span>
+    <div class="menu">
+      <p class="lang" aria-label="Language"><strong aria-current="true">EN</strong> <span aria-hidden="true">|</span> <a href="../sv/support/index.html" hreflang="sv" lang="sv" aria-label="Svenska">SV</a></p>
+    </div>
+  </div>
+</nav>
 <main>
-<p><a href="../sv/support/">På svenska</a></p>
-<h1>Kattmat support</h1>
-<p class="muted">Meals and care for every cat, on iPhone</p>
+<header class="hero">
+  <span class="art"><img class="pixel" src="data:image/png;base64,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" width="96" height="96" alt="Ruby, a pixel-art cat, sitting and looking at you"></span>
+  <div>
+    <h1>Kattmat support</h1>
+  </div>
+</header>
 
-<p>Hi, Ruby here. Something not working, or an idea for Kattmat? Write to <a href="mailto:kattmat.app@icloud.com">kattmat.app@icloud.com</a>, in English or Swedish. A human answers, usually within a few days (I supervise).</p>
-<p>It helps to say which iPhone you have, its iOS version, and what you tapped just before.</p>
+<div class="bubble">
+  <p>Hi, I’m Ruby. Stuck on something? Got an idea? We’d love to hear from you. A real person answers, usually within a few days. (I supervise.)</p>
+</div>
 
-<h2>How do I start?</h2>
-<p>Kattmat starts empty. Tap <b>Add a pet</b> on Today, give them a name and tap <b>Add</b>, then add their routines on their page: meals, play, the litter box, whatever your home runs on. Each routine shows on Today on the days it's due. Setting up is free; ticking things off, reminders, widgets and Siri start with the free trial.</p>
+<section class="card" aria-labelledby="contact">
+  <h2 id="contact">Email</h2>
+  <a class="mail" href="mailto:kattmat.app@icloud.com">kattmat.app@icloud.com</a>
+  <p class="muted">When you email us, we get your email address and the content of your email. We use it only to answer you. The <a href="../privacy/index.html">privacy policy</a> says how long we keep it.</p>
+  <p>Write in English or Swedish. If something went wrong, tell us what you were doing and which iPhone you have. Then we can find it faster.</p>
+  <p class="muted">In the app: Settings › <b class="ui">“Help &amp; support”</b> › <b class="ui">“Email us”</b>.</p>
+</section>
 
-<h2>My reminders don't come</h2>
-<p>Reminders come during the free trial and with Kattmat. Before the trial they wait, and they pause a few days after a plan ends. Check that the routine has a time, that Kattmat may send notifications (Settings › Notifications › Kattmat on your iPhone), and that a Focus isn't holding them back. If Today says <b>Reminders are off</b>, tap <b>Turn on</b>. A routine you've already marked done today won't remind you again until tomorrow.</p>
+<nav class="toc" aria-labelledby="toc">
+  <h2 id="toc">Common questions</h2>
+  <ul>
+    <li><a href="#reminders">My reminders don’t come</a></li>
+    <li><a href="#stop">Stopping a routine</a></li>
+    <li><a href="#widget">Widgets and Siri</a></li>
+    <li><a href="#move">A new iPhone</a></li>
+    <li><a href="#share">Sharing with a partner or sitter</a></li>
+    <li><a href="#cost">What Kattmat costs</a></li>
+    <li><a href="#purchases">Cancel, restore or refund</a></li>
+  </ul>
+</nav>
 
-<h2>How do I add the widget?</h2>
-<p>Touch and hold the Home Screen, tap <b>Edit</b> › <b>Add Widget</b> and search for Kattmat. There are three Home Screen sizes, Lock Screen widgets, and a control for Control Center. Tap a routine's check (or <b>Done</b>) in the widget to mark it done; tap again to undo. On a locked iPhone, marking a routine done, undoing a tick or logging a meal from a widget, Control Center, Siri or a reminder asks for Face ID first.</p>
+<h2 id="reminders">My reminders don’t come</h2>
+<p>Reminders come with the free trial or a plan. Before that there are none. In your partner’s household, your reminders follow their plan. Already have a trial or a plan? Check these:</p>
+<ul>
+  <li>The routine has a time and <b class="ui">“Remind me”</b> is on.</li>
+  <li>Your iPhone’s Settings let Kattmat send notifications.</li>
+  <li>No Focus is holding them back.</li>
+  <li>Today doesn’t say <b class="ui">“Reminders are off”</b>. If it does, tap <b class="ui">“Turn on”</b>.</li>
+  <li>No sitter is looking after your pets. On a sitter’s days the reminders go to them instead. You can change this with <b class="ui">“Pause my reminders”</b> when you invite them.</li>
+</ul>
+<p>Already marked it done today? Then it waits until the next day it’s due.</p>
 
-<h2>What can I ask Siri?</h2>
-<p>Try "What's left today in Kattmat?", "What's next in Kattmat?" or "Tick off the next one in Kattmat". The Shortcuts app lists them all.</p>
+<h2 id="stop">Stopping a routine</h2>
+<p>Tap the routine. Then tap <b class="ui">“Edit routine”</b> and <b class="ui">“Delete routine”</b>. If it has history, you get two choices:</p>
+<ul>
+  <li><b class="ui">“Stop routine”</b> takes it off Today and stops its reminders. History keeps its days. If you marked it done today, it stays on Today until tomorrow.</li>
+  <li><b class="ui">“Delete routine and its history”</b> removes it all.</li>
+</ul>
 
-<h2>How do I keep my data safe, or move to a new iPhone?</h2>
-<p>In Kattmat, open Settings (top left of Today) and tap <b>Back up household</b>. Save the file in Files or send it to yourself. On the new iPhone, open the file, or use <b>Restore from a file…</b> in Settings; Kattmat shows what's in it before anything changes.</p>
-<p>Or turn on <b>Keep in iCloud</b> in Settings on each iPhone, and your household follows your Apple Account to all of them.</p>
+<h2 id="widget">Widgets and Siri</h2>
+<p>Touch and hold your Home Screen. Tap <b class="ui">“Edit”</b> and then <b class="ui">“Add Widget”</b>. Search for Kattmat.</p>
+<p>Tap a check in the widget to mark a routine done. Tapped the wrong one? Tap it again within five seconds to undo.</p>
+<p>You can also ask Siri “What’s left today in Kattmat?” The Shortcuts app lists everything Siri can do.</p>
 
-<h2>How do I share with a partner or a sitter?</h2>
-<p>Open Settings › People and tap <b>Invite your partner</b> or <b>Invite a sitter</b> (for a sitter, pick their first and last day), then <b>Send invite…</b>. Sharing goes through iCloud, so inviting turns on Keep in iCloud. Inviting needs Kattmat (or the free trial); once your partner has joined, they can invite a sitter too. The person needs an iPhone with Kattmat and an Apple Account, and joining is free for them. A sitter's access ends after their last day.</p>
-<p>A sitter without Kattmat can get a checklist PDF to fill in in Google Drive, Chrome or Edge, or on paper: on the Pets tab, tap <b>⋯</b> › <b>Sitter checklist…</b>. When the filled-in copy comes back, open it in Kattmat, or use <b>Import sitter checklist…</b> in Settings; Kattmat shows what it found before adding it to History.</p>
-
-<h2>What does Kattmat cost?</h2>
-<p>Kattmat is free to download, and setting up your cats is free. You can try everything free for 14 days: the trial starts when you choose monthly or yearly. After that, keep it all with Kattmat: every feature, for as many cats as you have, including sharing with a partner and sitters and the sitter checklist PDF. Choose monthly or yearly, which renew until you cancel, or pay once for good. The App Store shows the prices in your currency.</p>
-<p>Without a plan, everything you added stays in Kattmat to look at, back up and restore; choose a plan to tick things off, get reminders and add things again.</p>
-<p>If someone invites you, you don't pay. A sitter uses Kattmat free for the days they look after the pets, and a partner for as long as they're in the household. To keep a household of your own afterwards, choose Kattmat.</p>
-
-<h2>Purchases and refunds</h2>
-<p>Purchases go through the App Store. To cancel a subscription or the trial period:</p>
-<ol>
-<li>In Kattmat, tap <b>Settings</b>.</li>
-<li>Tap your plan at the top: <b>Trial period</b> or <b>Kattmat</b>.</li>
-<li>Tap <b>Manage subscription</b>.</li>
-<li>Tap <b>Cancel Subscription</b>.</li>
+<h2 id="move">A new iPhone</h2>
+<p>Is <b class="ui">“Keep in iCloud”</b> on? Then your household comes along by itself. There’s nothing to move by hand:</p>
+<ol class="steps">
+  <li>Sign in to the new iPhone with the same Apple Account.</li>
+  <li>Install Kattmat and open it.</li>
+  <li>Tap Settings (the sliders at the top left of Today). Turn on <b class="ui">“Keep in iCloud”</b>.</li>
 </ol>
-<p>Cancel at least 24 hours before the trial period ends and you pay nothing for it. A one-time purchase has nothing to cancel.</p>
-<p>Refunds go through Apple, not Kattmat:</p>
-<ol>
-<li>Sign in at <a href="https://reportaproblem.apple.com">reportaproblem.apple.com</a>.</li>
-<li>Tap <b>I’d like to</b>, then <b>Request a refund</b>.</li>
-<li>Choose why, then tap <b>Next</b>.</li>
-<li>Choose Kattmat, then tap <b>Submit</b>.</li>
+<p>Your pets and routines appear within a minute. Keep Kattmat open until they do.</p>
+<h3><b class="ui">“Keep in iCloud”</b> is off?</h3>
+<p>Then move your household in a backup file:</p>
+<ol class="steps">
+  <li>On the old iPhone, tap <b class="ui">“Back up household”</b> in Settings.</li>
+  <li>Save the file in Files or send it to yourself.</li>
+  <li>On the new iPhone, open the file. Or tap <b class="ui">“Restore from a file…”</b> in Settings.</li>
 </ol>
+<p>Kattmat shows what’s in the file before anything changes.</p>
+<h3>Your plan comes too</h3>
+<p>Your plan belongs to your Apple Account, not to your household. So Kattmat finds it by itself on any iPhone signed in with that account. It doesn’t matter how you moved. If your plan doesn’t show, tap it at the top of Settings. Then tap <b class="ui">“Restore purchases”</b>.</p>
 
-<h2>Privacy</h2>
-<p>Kattmat keeps your household on your iPhone, and in your own iCloud if you turn it on, and collects nothing. The details are in the <a href="../privacy/">privacy policy</a>.</p>
+<h2 id="share">Sharing with a partner or sitter</h2>
+<p>Open Settings. Under People, tap <b class="ui">“Invite your partner”</b> or <b class="ui">“Invite a sitter”</b>. Then tap <b class="ui">“Send invite…”</b></p>
+<p>For a sitter you pick a <b class="ui">“First day”</b> and a <b class="ui">“Last day”</b>. Their access ends by itself after the last day.</p>
+<p>The person you invite needs an iPhone with Kattmat installed. They also need an Apple Account. Joining is free for them. Inviting needs the free trial or a plan.</p>
+<h3>A sitter without an iPhone</h3>
+<p>Send them a checklist PDF instead. On the Pets tab, tap <b class="ui">⋯</b> and then <b class="ui">“Sitter checklist…”</b></p>
+<p>Your sitter fills it in on a screen. They can use Files on an iPhone or iPad, Google Drive on Android, or Chrome or Edge on a computer. Then they save it and send the same file back to you. A photo or screenshot of it can’t be read.</p>
+<p>Open the returned file in Kattmat. It shows you what it found before anything goes into History. Making a checklist needs the trial or a plan. Reading one back is always free.</p>
+
+<h2 id="cost">What Kattmat costs</h2>
+<p>Kattmat is free to download. Setting up your pets and routines is free too.</p>
+<p>Marking routines done and reminders start with the free trial. It gives you 14 days of everything, once per Apple Account. It starts when you choose the monthly or yearly plan. After the trial, keep Kattmat with one of these:</p>
+<ul class="prices">
+  <li><b>Monthly</b> $3.99 · €3.99 · 49 kr a month</li>
+  <li><b>Yearly</b> $29.99 · €29.99 · 349 kr a year</li>
+  <li><b>Lifetime</b> $49.99 · €49.99 · 599 kr, paid once</li>
+</ul>
+<p>Every plan has everything, for as many pets as you like. The App Store shows your exact price before you buy.</p>
+<p>Partners and sitters you invite use Kattmat for free. If your plan ends, nothing is deleted. Marking done and reminders stop, but you can still see it all and back it up. Widgets still show your day, and Siri still tells you what’s left. In a TestFlight beta, everything is unlocked while you test.</p>
+
+<h2 id="purchases">Cancel, restore or refund</h2>
+<p><b>Cancel:</b> In Settings, tap your plan at the top. Tap <b class="ui">“Manage subscription”</b> and then <b class="ui">“Cancel Subscription”</b>. Cancel at least two days before the trial ends, and you pay nothing.</p>
+<p><b>Restore:</b> In Settings, tap your plan. Then tap <b class="ui">“Restore purchases”</b>.</p>
+<p><b>Refund:</b> Refunds go through Apple. Sign in at <a href="https://reportaproblem.apple.com">reportaproblem.apple.com</a>. Tap <b class="ui">“I’d like to”</b> and then <b class="ui">“Request a refund”</b>. Choose Kattmat.</p>
+
+<p class="muted">Your household stays on your iPhone. It goes to iCloud only if you turn that on or share it. We collect nothing. Read more in the <a href="../privacy/index.html">privacy policy</a>.</p>
+
+<footer>
+  <img class="pixel" src="data:image/png;base64,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" width="128" height="128" alt="Ruby curled up as a loaf">
+  <p><a href="../support/index.html" aria-current="page">Support</a> <a href="../privacy/index.html">Privacy policy</a></p>
+  <p class="muted">Kattmat is made by Diliara Tazieva, Sweden.</p>
+</footer>
+
+<script>
+(function () {
+  // The page's search: built here, so without JavaScript the page reads as before. Nothing is fetched.
+  // The pages' only script, which Di asked for: the privacy policy promises no tracking, so keep it inline and offline.
+  var T = {"one": "1 result.", "many": "%d results, best first.", "open": "Search", "close": "Close search", "none": "Nothing found for <q></q>. Write to us at %m, and we’ll help.", "lang": "en", "label": "Search the help", "placeholder": "Search the help", "synonyms": [["sitter", "cat sitter", "pet sitter", "dog walker", "babysitter", "carer"], ["partner", "spouse", "husband", "wife", "family", "roommate"], ["cost", "price", "pay", "money", "kr", "€", "$", "expensive"], ["plan", "subscription", "purchase", "buy", "trial", "lifetime", "monthly", "yearly"], ["delete", "remove", "erase"], ["back up", "backup", "move", "new phone", "new iphone", "restore", "transfer"], ["reminder", "notification", "alert"], ["marked done", "mark done", "tick", "check", "complete"], ["widget", "home screen", "lock screen"], ["refund", "money back", "purchase"], ["cancel", "unsubscribe", "stop paying", "end my plan", "cancel subscription"], ["email", "e-mail", "mail", "message", "contact", "write to us", "writing"]]};
+  var root = document.currentScript.parentElement;
+  // The bar sits before main, beside it in the same parent.
+  var bar = root.parentElement.querySelector(".topbar");
+  if (!bar) return;
+  var menu = bar.querySelector(".menu");
+  var row = bar.querySelector(".topbar-in");
+  var n = (window.kattmatSearch = (window.kattmatSearch || 0) + 1);
+
+  // How well a section answers a query, 0 when it doesn't. Every word of the query must match somewhere.
+  // Per word, the best of: the word in the section's heading (100), a synonym there (60), the word in a
+  // subheading (50), a synonym there (40), the word as a whole word in the text (20), a synonym (8),
+  // any part of a word (2). A few points for how often it comes up break ties.
+  function isWordChar(c) { return /[\p{L}\p{N}]/u.test(c); }
+  // Short words must match whole ("kr" isn't "kraschrapporter"); longer ones by their start, so
+  // "delete" finds "deleting". A sign like € or $ may run into its number.
+  function stem(term) { return term.length > 4 ? term.slice(0, Math.max(4, term.length - 2)) : term; }
+  function whole(term) { return term.length <= 3 && isWordChar(term[term.length - 1]); }
+  function count(text, term) {
+    var s = stem(term), n = 0, i = -1;
+    while ((i = text.indexOf(s, i + 1)) !== -1) {
+      if (i > 0 && isWordChar(text[i - 1])) continue;
+      if (whole(term) && i + s.length < text.length && isWordChar(text[i + s.length])) continue;
+      n++;
+    }
+    return n;
+  }
+  function words(s, lang) { return s.toLocaleLowerCase(lang).split(/\s+/).filter(Boolean); }
+  // A word a reader types, with the words it may mean: "walker" finds sitter, "spouse" finds partner.
+  function alternatives(w, T) {
+    var alts = [w];
+    T.synonyms.forEach(function (group) {
+      var hit = group.some(function (term) {
+        return w.length > 2 && words(term, T.lang).some(function (t) { return t.indexOf(w) === 0; });
+      });
+      if (hit) alts = alts.concat(group.filter(function (t) { return alts.indexOf(t) === -1; }));
+    });
+    return alts;
+  }
+  function score(section, query, T) {
+    var total = 0;
+    var all = section.heading + " " + section.subheadings + " " + section.text;
+    var each = words(query, T.lang).map(function (w) { return alternatives(w, T); });
+    for (var k = 0; k < each.length; k++) {
+      var alts = each[k], w = alts[0], others = alts.slice(1);
+      var any = function (text) { return others.some(function (a) { return count(text, a) > 0; }); };
+      var best =
+        count(section.heading, w) ? 100 : any(section.heading) ? 60 :
+        count(section.subheadings, w) ? 50 : any(section.subheadings) ? 40 :
+        count(section.text, w) ? 20 : any(section.text) ? 8 :
+        alts.some(function (a) { return all.indexOf(a) !== -1; }) ? 2 : 0;
+      if (!best) return 0;
+      var times = alts.reduce(function (n, a) { return n + count(all, a); }, 0);
+      total += best + Math.min(times, 5);
+    }
+    return total;
+  }
+  // Whether a click landed outside all of `inside`. It goes by the path the click took when it happened,
+  // so a click whose target has since left the page (an icon swapped out) still counts as inside.
+  function outside(event, inside) {
+    var path = event.composedPath ? event.composedPath() : [];
+    return !inside.some(function (el) { return path.indexOf(el) !== -1 || el.contains(event.target); });
+  }
+  function lower(s) { return s.toLocaleLowerCase(T.lang); }
+  function clean(s) { return s.replace(/\s+/g, " ").trim(); }
+
+  // Each h2 outside the cards starts a section, which runs to the next h2 or the footer.
+  var sections = [];
+  Array.prototype.forEach.call(root.querySelectorAll("h2[id]"), function (h) {
+    if (h.closest(".card, .toc")) return;
+    var parts = [];
+    for (var el = h.nextElementSibling; el && el.tagName !== "H2" && el.tagName !== "FOOTER" && el.tagName !== "SCRIPT"; el = el.nextElementSibling) parts.push(el);
+    var subs = parts.filter(function (p) { return p.tagName === "H3"; });
+    var body = clean(parts.filter(function (p) { return p.tagName !== "H3"; }).map(function (p) { return p.textContent; }).join(" "));
+    sections.push({
+      id: h.id,
+      title: clean(h.textContent),
+      body: body,
+      heading: lower(clean(h.textContent)),
+      subheadings: lower(subs.map(function (p) { return clean(p.textContent); }).join(" | ")),
+      text: lower(body),
+    });
+  });
+  if (!sections.length) return;
+
+  var glass = '<svg class="icon-open" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>';
+  var cross = '<svg class="icon-close" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
+  var toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "search-toggle";
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.setAttribute("aria-controls", "search" + n);
+  menu.appendChild(toggle);
+
+  // The panel opens over the page, under the bar, so nothing on the page moves.
+  var panel = document.createElement("div");
+  panel.className = "search-panel";
+  panel.id = "search" + n;
+  panel.setAttribute("role", "search");
+  panel.hidden = true;
+  panel.innerHTML =
+    '<label class="visually-hidden" for="q' + n + '">' + T.label + "</label>" +
+    '<input id="q' + n + '" type="search" autocomplete="off" spellcheck="false" placeholder="' + T.placeholder + '">' +
+    '<p class="search-status" role="status" aria-live="polite"></p>' +
+    '<ol class="results"></ol>';
+  row.appendChild(panel);
+  var input = panel.querySelector("input");
+  var status = panel.querySelector(".search-status");
+  var list = panel.querySelector(".results");
+
+  // Both icons stay in the button and CSS shows one, so the icon a click lands on is never swapped out.
+  toggle.innerHTML = glass + cross;
+  function setToggle(open) {
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? T.close : T.open);
+  }
+  setToggle(false);
+  function open() {
+    panel.hidden = false;
+    setToggle(true);
+    input.focus();
+    run();
+  }
+  function close(refocus) {
+    panel.hidden = true;
+    setToggle(false);
+    if (refocus) toggle.focus();
+  }
+  toggle.addEventListener("click", function () { if (panel.hidden) open(); else close(true); });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !panel.hidden) { event.preventDefault(); close(true); }
+  });
+  document.addEventListener("click", function (event) {
+    if (!panel.hidden && outside(event, [panel, toggle])) close(false);
+  });
+
+  function escape(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  // Puts text into an element with the matched words marked; the text stays text, never markup.
+  function marked(el, text, re) {
+    var from = 0;
+    if (re) {
+      re.lastIndex = 0;
+      text.replace(re, function (m, before, word, offset) {
+        var at = offset + before.length;
+        el.appendChild(document.createTextNode(text.slice(from, at)));
+        var hit = document.createElement("mark");
+        hit.className = "hit";
+        hit.textContent = word;
+        el.appendChild(hit);
+        from = at + word.length;
+      });
+    }
+    el.appendChild(document.createTextNode(text.slice(from)));
+  }
+  // A short piece of the answer around its first match.
+  function snippet(s, re) {
+    var at = 0;
+    if (re) {
+      re.lastIndex = 0;
+      var m = re.exec(s.body);
+      if (m) at = m.index + m[1].length;
+    }
+    var start = Math.max(0, at - 50);
+    var piece = s.body.slice(start, start + 150);
+    if (start > 0) piece = "…" + piece.replace(/^\S*\s/, "");
+    if (start + 150 < s.body.length) piece = piece.replace(/\s\S*$/, "") + "…";
+    return piece;
+  }
+
+  var timer;
+  function run() {
+    list.textContent = "";
+    var query = input.value.trim();
+    if (!query) { status.textContent = ""; return; }
+    // Best answer first; equal scores keep the page's order.
+    var ranked = sections.map(function (s, i) { return { s: s, i: i, score: score(s, query, T) }; })
+      .filter(function (r) { return r.score; })
+      .sort(function (a, b) { return b.score - a.score || a.i - b.i; });
+    // One-letter words still count, but aren't marked: every "a" would light up.
+    var terms = [];
+    words(query, T.lang).forEach(function (w) {
+      alternatives(w, T).forEach(function (a) { if (a.length > 1 && terms.indexOf(a) === -1) terms.push(a); });
+    });
+    var re = null;
+    if (terms.length) {
+      var pattern = terms.sort(function (a, b) { return b.length - a.length; }).map(function (t) {
+        return whole(t) ? escape(t) + "(?![\\p{L}\\p{N}])" : escape(stem(t)) + "[\\p{L}\\p{N}]*";
+      }).join("|");
+      re = new RegExp("(^|[^\\p{L}\\p{N}])(" + pattern + ")", "giu");
+    }
+    ranked.forEach(function (r) {
+      var item = document.createElement("li");
+      var link = document.createElement("a");
+      link.href = "#" + r.s.id;
+      var title = document.createElement("b");
+      marked(title, r.s.title, re);
+      var text = document.createElement("span");
+      marked(text, snippet(r.s, re), re);
+      link.appendChild(title);
+      link.appendChild(text);
+      link.addEventListener("click", function () { close(false); });
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+    if (ranked.length) {
+      status.textContent = ranked.length === 1 ? T.one : T.many.replace("%d", ranked.length);
+    } else {
+      status.innerHTML = T.none.replace("%m", '<a href="mailto:kattmat.app@icloud.com">kattmat.app@icloud.com</a>');
+      status.querySelector("q").textContent = query;
+    }
+  }
+  input.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(run, 200); });
+})();
+</script>
 </main>
 </body>
 </html>

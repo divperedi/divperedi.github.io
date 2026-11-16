@@ -2,72 +2,496 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kattmat · Integritetspolicy</title>
 <style>
-  :root { color-scheme: light dark; --bg: #fdf8ec; --text: #2b2340; --muted: #6b6280; --link: #6a4fc2; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #221a33; --text: #f1ecfa; --muted: #b8aed0; --link: #c7b6ff; } }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 ui-rounded, -apple-system, system-ui, sans-serif; }
-  main { max-width: 40rem; margin: 0 auto; padding: 2rem 16px 4rem; }
-  h1 { font-size: 1.8rem; margin-bottom: .2rem; }
-  h2 { font-size: 1.15rem; margin-top: 2rem; }
+  /* One column on the app's ground: Ruby and her speech bubble on top, then plain sections. Cards only for what must be found first. Colours are the app's own (Assets.xcassets/Colors). */
+  :root {
+    color-scheme: light dark;
+    --ground-top: #fff4d6; --ground-mid: #f7f0ec; --ground-bottom: #ebebfb;
+    --ink: #231e33; --muted: #5d5873; --link: #5b47c2;
+    --card: rgba(255, 255, 255, .82); --tint: #e4e1f7; --ring: #b9b0ee;
+    --glow: 255 217 223; --bar: #fffdf7; --shadow: rgba(91, 71, 194, .13); --art-edge: rgba(241, 236, 255, 0);
+    --rounded: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root { --ground-top: #2b2234; --ground-mid: #221e33; --ground-bottom: #1e1b3b; --ink: #f3effb; --muted: #bdb5d6; --link: #c9beff; --card: rgba(46, 41, 69, .86); --tint: #3a3366; --ring: #6b60b3; --glow: 79 46 69; --bar: #2e2945; --shadow: rgba(0, 0, 0, .35); --art-edge: rgba(241, 236, 255, .85); } }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0; color: var(--ink); background-color: var(--ground-mid);
+    background-image: linear-gradient(180deg, var(--ground-top) 0%, var(--ground-mid) 46%, var(--ground-bottom) 100%);
+    background-attachment: fixed;
+    font: 1.0625rem/1.6 var(--rounded);
+  }
+  main { max-width: 41rem; margin: 0 auto; padding: 1.25rem max(16px, env(safe-area-inset-right)) 4rem max(16px, env(safe-area-inset-left)); }
+  a { color: var(--link); text-underline-offset: .18em; }
+  a:focus-visible { outline: 3px solid var(--link); outline-offset: 3px; border-radius: 6px; }
+  p, ul, ol { margin: 0 0 .85rem; }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+  h2 { font-size: 1.35rem; font-weight: 800; margin: 2.6rem 0 .7rem; }
+  h3 { font-size: 1.0625rem; font-weight: 800; margin: 1.4rem 0 .4rem; }
   .muted { color: var(--muted); }
-  a { color: var(--link); }
+  .pixel { image-rendering: pixelated; image-rendering: crisp-edges; filter: drop-shadow(0 0 1px var(--art-edge)); }
+
+  /* A slim, quiet bar across the window, on every screen size, that stays at the top while the page scrolls:
+     Kattmat's name at its left edge, the language switch (and the page's search) at its right edge, with a
+     small side padding, not held to the content column. */
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--bar); border-bottom: 1px solid var(--tint); }
+  .topbar-in { position: relative; display: flex; flex-flow: row nowrap; align-items: center; justify-content: space-between; gap: .5rem; min-height: 2.75rem; padding: .2rem max(22px, env(safe-area-inset-right)) .2rem max(22px, env(safe-area-inset-left)); }
+  .brand { flex: none; font-weight: 800; }
+  .menu { display: flex; flex-flow: row nowrap; align-items: center; gap: .25rem; }
+  .lang { margin: 0; font-size: .9375rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .lang strong { color: var(--ink); }
+  .lang a { display: inline-block; padding: .55rem .3rem; text-decoration: none; }
+  .lang a:hover { text-decoration: underline; }
+  .hero { display: flex; align-items: center; gap: .85rem; }
+  /* Ruby's glow: centred on her body, which sits left of the picture's middle (her tail takes the right), and eased out to nothing so it has no edge. */
+  .hero .art { position: relative; flex: none; width: 56px; height: 56px; isolation: isolate; }
+  .hero .art::before { content: ""; position: absolute; z-index: -1; left: 44%; top: 55%; width: 124px; height: 124px; transform: translate(-50%, -50%); pointer-events: none;
+    background: radial-gradient(closest-side, rgb(var(--glow) / .5), rgb(var(--glow) / .38) 30%, rgb(var(--glow) / .2) 55%, rgb(var(--glow) / .08) 75%, rgb(var(--glow) / .02) 90%, rgb(var(--glow) / 0)); }
+  .hero img { display: block; width: 56px; height: 56px; }
+  .hero div { flex: 1 1 auto; min-width: 0; }
+  .hero h1 { font-size: 1.75rem; }
+  .hero p { margin: .2rem 0 0; font-weight: 600; }
+
+  /* Ruby speaks: a card with a tail up towards her. */
+  .bubble { position: relative; background: var(--card); border-radius: 22px; padding: .85rem 1.1rem; margin: .9rem 0 0; box-shadow: 0 6px 18px var(--shadow); font-weight: 600; }
+  .bubble::before { content: ""; position: absolute; top: -9px; left: 19px; width: 18px; height: 18px; background: inherit; transform: rotate(45deg); border-radius: 4px 0 0 0; }
+  .bubble p:last-child, .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+  .card { background: var(--card); border-radius: 22px; padding: 1.1rem 1.2rem; margin: 1.1rem 0 0; box-shadow: 0 6px 18px var(--shadow); }
+  .card h2 { font-size: .8125rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 .4rem; }
+  .mail { display: inline-block; font-size: 1.3rem; font-weight: 800; overflow-wrap: anywhere; margin-bottom: .35rem; }
+
+  .toc { margin-top: 1.8rem; }
+  .toc h2 { font-size: .8125rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 .5rem; }
+  .toc ul { list-style: none; padding: 0; margin: 0; columns: 2 16rem; column-gap: 1.5rem; }
+  .toc li { break-inside: avoid; padding: .22rem 0; }
+  .toc a { font-weight: 700; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* The app's own button and menu names. */
+  b { font-weight: 800; }
+  b.ui { background: var(--tint); border-radius: .5em; padding: .06em .4em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  ul { padding-left: 1.25rem; }
+  li { margin: .35rem 0; }
+  ul li::marker { color: var(--ring); }
+  ul.prices { list-style: none; padding: 0; }
+  ul.prices li { background: var(--card); border-radius: 16px; padding: .6rem 1rem; margin: .5rem 0; }
+  ul.prices b { display: block; }
+  ol.steps { list-style: none; padding: 0; counter-reset: step; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 2.6rem; margin: .6rem 0; min-height: 1.9rem; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: -.05rem;
+    width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--tint); color: var(--link);
+    font-weight: 800; font-variant-numeric: tabular-nums; display: flex; align-items: center; justify-content: center;
+  }
+
+  footer { margin-top: 3.2rem; text-align: center; }
+  footer img { width: 128px; height: 128px; }
+  footer p { margin: .3rem 0; }
+  footer a { font-weight: 700; margin: 0 .5rem; white-space: nowrap; }
+
+  /* The search, which only the page's script adds: a magnifier in the bar opens a panel over the page,
+     under the bar at its right edge, so nothing on the page moves. Marks keep ink-on-highlight contrast in both themes. */
+  :root { --hit: #ffe08a; }
+  @media (prefers-color-scheme: dark) { :root { --hit: #6b5518; } }
+  [hidden] { display: none !important; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .search-toggle { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none; padding: 0; color: var(--ink); background: transparent; border: 0; border-radius: 999px; cursor: pointer; }
+  .search-toggle:hover, .search-toggle[aria-expanded="true"] { background: var(--tint); }
+  .search-toggle:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+  .search-toggle svg { pointer-events: none; }
+  .search-toggle .icon-close, .search-toggle[aria-expanded="true"] .icon-open { display: none; }
+  .search-toggle[aria-expanded="true"] .icon-close { display: block; }
+  .search-panel { position: absolute; z-index: 10; top: calc(100% + .4rem); right: max(22px, env(safe-area-inset-right)); width: min(32rem, calc(100% - 44px)); display: flex; flex-direction: column; max-height: min(70vh, 36rem); overflow: auto; padding: .9rem; background: var(--bar); border-radius: 18px; box-shadow: 0 10px 30px var(--shadow), 0 0 0 1px var(--tint); }
+  .search-panel input { width: 100%; min-height: 2.75rem; padding: .45rem 1rem; font: 600 1rem/1.3 var(--rounded); color: var(--ink); background: var(--card); border: 1.5px solid var(--ring); border-radius: 999px; }
+  .search-panel input::placeholder { color: var(--muted); opacity: 1; }
+  .search-panel input:focus { border-color: var(--link); outline: none; }
+  .search-panel input:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+  .search-status { margin: .6rem .3rem 0; color: var(--muted); font-size: .9375rem; font-weight: 700; }
+  .search-status:empty { display: none; }
+  .results { list-style: none; padding: 0; margin: .4rem 0 0; }
+  .results li { margin: 0; }
+  .results a { display: block; padding: .55rem .6rem; border-radius: 12px; color: var(--ink); text-decoration: none; }
+  .results a:hover, .results a:focus-visible { background: var(--tint); }
+  .results a:focus-visible { outline: 3px solid var(--link); outline-offset: 0; }
+  .results b { display: block; color: var(--link); }
+  .results span { display: block; color: var(--muted); font-size: .9375rem; }
+  mark.hit { background: var(--hit); color: var(--ink); border-radius: .25em; padding: 0 .1em; }
 </style>
 </head>
 <body>
+<nav class="topbar" aria-label="Kattmat">
+  <div class="topbar-in">
+    <span class="brand">Kattmat</span>
+    <div class="menu">
+      <p class="lang" aria-label="Språk"><a href="../../privacy/index.html" hreflang="en" lang="en" aria-label="English">EN</a> <span aria-hidden="true">|</span> <strong aria-current="true">SV</strong></p>
+    </div>
+  </div>
+</nav>
 <main>
-<p><a href="../../privacy/">In English</a></p>
-<h1>Integritetspolicy</h1>
-<p class="muted">Kattmat för iPhone · Senast ändrad 10 november 2026</p>
+<header class="hero">
+  <span class="art"><img class="pixel" src="data:image/png;base64,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" width="96" height="96" alt="Ruby, en katt i pixelgrafik, som sitter och tittar på dig"></span>
+  <div>
+    <h1>Integritetspolicy</h1>
+    <p class="muted">Kattmat för iPhone · Senast ändrad 16 november 2026</p>
+  </div>
+</header>
 
-<p>Hej, Ruby här. Kort sagt: Kattmat sparar ditt hushåll på din iPhone, och vi ser det aldrig. Inget konto, ingen reklam, ingen spårning.</p>
+<div class="bubble">
+  <p>Hej, jag heter Ruby. Ditt hushåll bor på din iPhone, och vi ser det aldrig. Inget konto. Ingen reklam. Ingen spårning.</p>
+</div>
 
-<h2>Vad Kattmat sparar</h2>
-<p>Dina djur, deras rutiner och vad som markerats som klart, vägningar, skötselguider, anteckningar och kontaktuppgifter till veterinären och vid nödfall. Om du delar hushållet också namnen på dem som ingår i det, en kattvakts dagar och vem som markerat vad som klart eller skrivit vilken anteckning. Allt sparas i appen på din iPhone. Kattmat har ingen server och skickar inget av detta till oss. Det når andra bara när du delar det, som nedan.</p>
+<section class="card" aria-labelledby="short">
+  <h2 id="short">Kort sagt</h2>
+  <ul>
+    <li>Det du lägger in i Kattmat stannar på din iPhone. Kattmat har ingen server. Vi kan inte se ditt hushåll.</li>
+    <li>Vi samlar inte in något. Ingen statistik, ingen reklam, ingen spårning.</li>
+    <li>Hushållet hamnar i iCloud bara om du slår på <b class="ui">”Spara i iCloud”</b> eller delar det. Då hamnar det bara hos dem du bjuder in.</li>
+    <li>Apple kan skicka oss sammanställningar utan ditt namn. Utöver det hör vi bara av dig om du mejlar oss eller testar en beta.</li>
+  </ul>
+</section>
 
-<p>Om du slår på iCloud-synk sparas hushållet också i din egen privata iCloud, så att det finns på alla enheter som är inloggade med ditt Apple-konto. Bara ditt Apple-konto kan läsa det, tills du delar det; det kan inte vi. Apples pushtjänst säger till dina enheter när något ändrats. iCloud omfattas av Apples <a href="https://www.apple.com/se/legal/privacy/">integritetspolicy</a>.</p>
+<h2 id="stores">Vad Kattmat sparar</h2>
+<p>Kattmat sparar bara det du lägger in:</p>
+<ul>
+  <li>dina djur: namn, djurslag, födelsedag, utseende, skötselguide, nästa veterinärbesök och kontaktuppgifter till veterinären och vid nödfall;</li>
+  <li>för ett djur som har gått bort: dagen, och hur djuret ihågkoms;</li>
+  <li>rutiner, och vem som markerade dem som klara och när;</li>
+  <li>vägningar, och anteckningar med vem som skrev dem;</li>
+  <li>ditt namn och telefonnummer, om du skriver in dem i en checklista för kattvakten;</li>
+  <li>en kattvakts namn, från en checklista du läser in;</li>
+  <li>om du delar: personerna i hushållet och en kattvakts dagar.</li>
+</ul>
+<p>Appen sparar också sina inställningar och hemmets tidszon. Den sparar det den vet om din plan. Och den sparar vilka personer och utrymmen delningen har. Allt detta stannar på din iPhone. Inget av det skickas till oss.</p>
 
-<p>Om du delar hushållet får de du bjuder in det i sin Kattmat, genom Apples delning i iCloud. Inbjudan visar ditt namn och dina djur innan de går med. En partner får hela hushållet på sin iPhone (djur, rutiner, Historik, vägningar, skötselguider, anteckningar, kontakter och vilka som ingår i det) och ser och kan ändra allt. En kattvakt får bara det som deras skärmar visar, i ett eget utrymme: skötselguiderna och kontakterna för djuren de tar hand om, rutinerna och det som markerats som klart och skrivits under deras dagar. Inte din äldre Historik, vägningar, djur till minne, din Kattmat-plan, andra kattvakters anteckningar eller någons Apple-konto. De kan markera rutiner som klara, ångra sina egna bockar och skriva anteckningar; det de gör når ditt hushåll bara genom din eller din partners iPhone, som bara tar in just det, med deras namn. Apples delning visar en kattvakt namnen på dem utrymmet delas med (du och din partner), med en identitet som Apple har för varje konto; det kan Kattmat inte dölja. En kattvakts tillgång tar slut efter den sista dagen du valde, när du eller din partner avslutar den, eller när de lämnar. En partners tar slut när du tar bort hen eller hen lämnar. Vi ser aldrig ett delat hushåll heller.</p>
+<h2 id="icloud">iCloud</h2>
+<p>Med <b class="ui">”Spara i iCloud”</b> på sparas hushållet också i din egen privata iCloud. Bara ditt Apple-konto kan läsa det tills du delar det. Kattmat sparar en kopia på din iPhone av det den skickat. Så vet appen vad som ändrats.</p>
+<p>Kattmat behöver veta vem i hushållet som är du. Därför sparar appen det id som iCloud ger varje persons Apple-konto. Det är inte en e-postadress eller ett namn. Id:na finns kvar när någon lämnar och när iCloud stängs av. Säkerhetskopior har dem inte med.</p>
+<p>Varje gång du öppnar Kattmat kollar appen med iCloud om hushållet är delat och med vem. Det gör den även när <b class="ui">”Spara i iCloud”</b> är avstängt. Den skickar inget från ditt hushåll när den kollar. När något ändras säger Apples aviseringstjänst till dina enheter. iCloud omfattas av Apples <a href="https://www.apple.com/se/legal/privacy/">integritetspolicy</a>.</p>
 
-<p>När en partner har gått med sparas också din Kattmat-plan (vilken det är och när den tar slut) i det delade hushållet, så att partnerns iPhone vet om den får bjuda in en kattvakt.</p>
+<h2 id="sharing">När du delar hushållet</h2>
+<p>De du bjuder in får hushållet genom Apples delning i iCloud. Inbjudan visar hushållsägarens namn och djuren. En kattvakts inbjudan visar också kattvaktens namn och dagar. Vi ser aldrig ett delat hushåll.</p>
+<h3>En partner</h3>
+<p>En partner delar hela hushållet med dig. Hen ser allt och kan ändra det, precis som du. När partnern har gått med sparas din plan också i det delade hushållet. Partnerns Kattmat läser den för att veta vad den får göra. Den innehåller:</p>
+<ul>
+  <li>vilken plan du har, och om det är en provperiod;</li>
+  <li>när den tar slut, och om den förnyas;</li>
+  <li>en misslyckad betalning, och hur länge Apple håller planen igång;</li>
+  <li>en återbetalning;</li>
+  <li>senaste dagen Apple bekräftade planen.</li>
+</ul>
+<p>Det finns kvar i din iCloud tills du raderar hushållet från iCloud.</p>
+<h3>En kattvakt</h3>
+<p>En kattvakt får ett eget utrymme. Där finns bara det hen behöver:</p>
+<ul>
+  <li>djuren hen tar hand om: namn, djurslag, födelsedag, utseende, skötselguide, nästa veterinärbesök och kontakter;</li>
+  <li>rutinerna;</li>
+  <li>det som markerats som klart och skrivits under kattvaktens dagar;</li>
+  <li>ditt och din partners namn.</li>
+</ul>
+<p>En kattvakt får inte din äldre Historik eller dina vägningar. Hen ser inte djur till minne eller din plan. Hen ser inte andra kattvakters anteckningar eller någons Apple-konto.</p>
+<p>Det en kattvakt gör når ditt hushåll bara genom din eller din partners iPhone, med kattvaktens namn. Apples delning visar kattvakten namnen på dem utrymmet delas med. Den visar också ett id som Apple har för varje konto. Det kan Kattmat inte dölja.</p>
+<p>En kattvakts åtkomst tar slut efter den sista dagen. Du eller din partner kan avsluta den tidigare, och kattvakten kan själv lämna i Kattmat. Kattmat tar då bort hushållet från kattvaktens iPhone. Når hens iPhone inte iCloud är hushållet dolt tills den gör det.</p>
+<p>Din iPhone stänger sedan kattvaktens utrymme i iCloud. Den väntar en dag efter den sista dagen, så att det som markerats som klart på en telefon utan nät hinner fram. Avslutar du åtkomsten i förtid väntar den en timme. Utrymmet stängs nästa gång Kattmat körs efter det.</p>
+<h3>En checklista för kattvakten</h3>
+<p>Checklistan som PDF innehåller dina djur, skötselguiden, kontakterna och rutinerna. Den innehåller också kattvaktens namn. Ditt namn och telefonnummer finns med om du skriver in dem. Den går bara dit du och kattvakten skickar den. Kattmat läser in den ifyllda kopian på din iPhone.</p>
 
-<p>För en kattvakt utan Kattmat gör Kattmat en checklista som PDF med skötselguiden, kontakterna och en ruta för varje rutin. Du skickar den själv, och kattvakten skickar tillbaka den ifyllda kopian till dig; Kattmat läser in det som gjorts och anteckningarna på din iPhone. Filen går bara dit du och kattvakten skickar den.</p>
+<h2 id="collect">Vad vi samlar in</h2>
+<p>Ingenting. Kattmat har ingen statistik och ingen tjänst för kraschrapporter. Appen har ingen reklam och ingen spårning. Den ber inte om att få spåra dig.</p>
+<p>I din iPhones inställningar kan du välja att dela kraschrapporter eller användningsdata med apputvecklare. Gör du det samlar Apple in dem. Apple visar oss sedan sammanställningar utan ditt namn. Det omfattas av Apples integritetspolicy.</p>
+<p>Påminnelserna planeras på din iPhone. Det gäller också den innan din provperiod tar slut. Kattmat har ingen egen server som skickar dem. Siri, Genvägar och widgetar körs också på din iPhone. Vad Siri gör med din röst omfattas av Apples integritetspolicy.</p>
+<p>Den här sidan och supportsidan ligger på GitHub Pages. Att öppna dem är ett besök hos GitHub, också när du öppnar dem från appen. Det omfattas av GitHubs integritetsvillkor.</p>
 
-<h2>Vad vi samlar in</h2>
-<p>Ingenting. Kattmat har ingen statistik, ingen tjänst för kraschrapporter, ingen reklam och ingen spårning, och appen ber aldrig om att få spåra dig.</p>
-<p>Om du i din iPhones inställningar väljer att dela kraschrapporter eller användningsdata med apputvecklare samlar Apple in dem och visar oss sammanställningar utan ditt namn. Det är Apples, enligt Apples integritetspolicy.</p>
+<h2 id="backups">Säkerhetskopior</h2>
+<p>När du säkerhetskopierar hushållet väljer du var filen hamnar. Till exempel i Filer eller Mail. Den finns kvar där tills du raderar den.</p>
+<p>Kattmat sparar också automatiska säkerhetskopior på din iPhone. Appen gör en före en stor ändring, som en återställning, en inbjudan eller när du går med i ett hushåll. De här säkerhetskopiorna har med personerna i hushållet och deras id.</p>
+<p>Kattmat sparar också en kopia av sina data när en uppdatering ändrar hur appen sparar dem. Samma sak om appen inte kan öppna sina data. Den behåller de tre senaste av varje sort.</p>
 
-<h2>Påminnelser, Siri och widgetar</h2>
-<p>Påminnelserna, också den innan din provperiod tar slut, planeras på din iPhone; Kattmat har ingen egen server som skickar dem. Siri, Genvägar, widgetar och knappen i Kontrollcenter körs av iOS på din iPhone. Vad Siri gör med din röst omfattas av Apples integritetspolicy.</p>
+<h2 id="purchases">Köp</h2>
+<p>Du köper planer och godis till Ruby via App Store. Apple sköter betalningen. Vi ser aldrig dina betaluppgifter.</p>
+<p>Från App Store får Kattmat veta:</p>
+<ul>
+  <li>vilken plan du har, och om det är en provperiod;</li>
+  <li>när den tar slut, och om den förnyas;</li>
+  <li>om en betalning misslyckats eller betalats tillbaka;</li>
+  <li>om du fortfarande kan få den gratis provperioden.</li>
+</ul>
+<p>Appen sparar det på din iPhone. När en partner har gått med sparas det också i din iCloud.</p>
 
-<h2>Säkerhetskopior</h2>
-<p>När du säkerhetskopierar hushållet gör Kattmat en fil, och du väljer vart den ska: Filer, AirDrop, Mail. Den stannar där du lägger den. Kattmat sparar också några automatiska säkerhetskopior på din iPhone.</p>
+<h2 id="writing">Om du skriver till oss</h2>
+<p>Om du mejlar oss får vi din e-postadress och innehållet i ditt mejl. Mejlet ligger i vår iCloud Mail, som är Apples e-posttjänst. Vi använder det bara för att svara dig. Vi raderar det när din fråga är klar, senast efter 12 månader. Vi delar det aldrig.</p>
 
-<h2>Köp</h2>
-<p>Kattmat (per månad, per år eller en gång för alltid) och godis till Ruby köps via App Store. Apple sköter betalningen; Kattmat får bara veta vilken plan du har och när den tar slut, och kontrollerar det på din iPhone. Vi ser aldrig dina betaluppgifter.</p>
+<h2 id="beta">Om du testar en beta</h2>
+<p>Du kan testa Kattmat via Apples TestFlight. Då delar Apple med oss:</p>
+<ul>
+  <li>namnet och e-postadressen vi bjöd in dig med (inget om du gick med via en offentlig länk);</li>
+  <li>din enhetsmodell och iOS-version;</li>
+  <li>hur ofta du öppnar betan;</li>
+  <li>kraschrapporter;</li>
+  <li>den feedback och de skärmbilder du skickar.</li>
+</ul>
+<p>Vi använder dem bara för att rätta fel i Kattmat. Vi delar dem aldrig. Vi raderar det vi har inom 30 dagar efter att betan är slut, eller efter att du bett om det. Det gäller dig som testare, din feedback och dina skärmbilder, och dina mejl till oss.</p>
+<p>Apple sparar en egen kopia en tid enligt sina <a href="https://www.apple.com/legal/privacy/data/sv/test-flight/">integritetsvillkor för TestFlight</a>. Den kan vi inte radera. Du kan hantera den på <a href="https://privacy.apple.com">privacy.apple.com</a>.</p>
 
-<h2>Om du skriver till oss</h2>
-<p>Om du mejlar oss får vi din e-postadress och det du skriver. Vi använder det bara för att svara dig, sparar det inte längre än vi behöver och delar det aldrig.</p>
-<p><b>Om du testar en beta.</b> Om du testar Kattmat via Apples TestFlight delar Apple med oss namnet och e-postadressen vi bjöd in dig med (inget om du gick med via en offentlig länk), din enhetsmodell och iOS-version, hur ofta du öppnar betan, kraschrapporter och den feedback och de skärmbilder du skickar. Vi använder dem bara för att förbättra Kattmat och delar dem aldrig. Inom 30 dagar efter att betan är slut, eller efter att du bett om det, raderar vi det vi har: dig som testare, din feedback och dina skärmbilder, och dina mejl till oss. Apple sparar en egen kopia en tid enligt sina <a href="https://www.apple.com/legal/privacy/data/sv/test-flight/">integritetsvillkor för TestFlight</a>, som vi inte kan radera; du kan hantera den på <a href="https://privacy.apple.com">privacy.apple.com</a>.</p>
+<h2 id="deleting">Radera dina uppgifter</h2>
+<p>Radera Kattmat, så försvinner allt appen sparat på din iPhone. Säkerhetskopior du sparat finns kvar tills du raderar dem.</p>
+<p>När en kattvakts åtkomst tar slut tar Kattmat bort ditt hushåll från kattvaktens iPhone. Ett tack finns kvar tills kattvakten stänger det. Där står ditt namn, dina djurs namn, kattvaktens namn och sista dag.</p>
+<p>När en partner lämnar eller du tar bort hen tar Kattmat bort ditt hushåll från hens iPhone. Appen tar också bort de automatiska säkerhetskopior som gjordes medan hen var med. En kopia av appens data från en uppdatering under den tiden kan finnas kvar på hens iPhone.</p>
+<p>Det kattvakter och partner markerat som klart och skrivit finns kvar i din Historik.</p>
+<p>Så raderar du hushållet från iCloud också:</p>
+<ol class="steps">
+  <li>Har en kattvakt fortfarande åtkomst, avsluta den först. Tryck på <b class="ui">”Avsluta …s åtkomst…”</b> under Personer i Inställningar.</li>
+  <li>Vänta en timme. Öppna sedan Kattmat igen med <b class="ui">”Spara i iCloud”</b> fortfarande på. Kattmat stänger kattvaktens utrymme.</li>
+  <li>Öppna Inställningar på hushållsägarens iPhone, med <b class="ui">”Spara i iCloud”</b> på. Tryck på <b class="ui">”Radera hushållet från iCloud…”</b></li>
+</ol>
+<p>Allt finns kvar på din iPhone. Delningen med din partner tar slut.</p>
 
-<h2>Radera dina uppgifter</h2>
-<p>Radera Kattmat från din iPhone, så försvinner allt appen sparat där. Säkerhetskopior du sparat finns kvar där du lade dem tills du raderar dem.</p>
-<p>När en kattvakts tillgång tar slut tar Kattmat bort hushållet från deras iPhone; det de markerat som klart och skrivit finns kvar i din Historik.</p>
-<p>När en partner lämnar eller du tar bort hen går hens iPhone tillbaka till sitt eget hushåll, och hens bockar och anteckningar finns kvar i din Historik. Kattmat behåller ingen kopia av ditt hushåll på hens iPhone: inga av de automatiska säkerhetskopiorna från tiden i hushållet finns kvar.</p>
-<p>För att radera hushållet från iCloud också: öppna Inställningar i Kattmat och tryck på <b>Radera hushållet från iCloud…</b> (knappen syns på hushållsägarens iPhone när Spara i iCloud är på). Allt finns kvar på din iPhone, och delningen med dem du bjudit in tar slut. Du kan också använda Inställningar › Apple-konto › iCloud › Hantera lagring på din iPhone.</p>
+<h2 id="children">Barn</h2>
+<p>Kattmat passar alla åldrar. Appen samlar inte in något från någon, barn inräknade.</p>
 
-<h2>Barn</h2>
-<p>Kattmat passar alla åldrar och samlar inte in något från någon, barn inräknade.</p>
+<h2 id="rights">Dina rättigheter</h2>
+<p>Diliara Tazieva är personuppgiftsansvarig för uppgifterna i den här policyn. Det är bara mejl du skickar oss. Testar du en beta är det också det som TestFlight delar med oss.</p>
+<ul>
+  <li><b>Varför vi får använda dem:</b> för att svara dig och rätta fel i Kattmat. Det är vårt berättigade intresse (artikel 6.1 f i dataskyddsförordningen, GDPR).</li>
+  <li><b>Vilka fler som hanterar dem:</b> Apple förvarar vår e-post (iCloud Mail) och driver TestFlight. GitHub driftar de här sidorna. Båda kan lagra uppgifter i USA. Apple gör det med EU:s standardavtalsklausuler. GitHub gör det enligt EU–USA-ramen för dataskydd (Data Privacy Framework).</li>
+  <li><b>Hur länge:</b> Vi raderar en mejlkonversation när din fråga är klar. Senast raderar vi den 12 månader efter det sista mejlet. För betauppgifter, se <a href="#beta">Om du testar en beta</a>.</li>
+</ul>
+<p>Du kan be att få se vad vi har om dig. Du kan be oss rätta det, radera det eller begränsa hur vi använder det. Du kan också när som helst invända mot att vi använder det. Mejla <a href="mailto:kattmat.app@icloud.com">kattmat.app@icloud.com</a>. Vi svarar oftast inom några dagar, och alltid inom en månad.</p>
+<p>Tycker du att vi hanterar dina uppgifter fel? Då kan du lämna in ett klagomål hos Integritetsskyddsmyndigheten (<a href="https://www.imy.se/">IMY</a>), eller hos dataskyddsmyndigheten där du bor eller arbetar.</p>
 
-<h2>Dina rättigheter</h2>
-<p>Enligt GDPR kan du fråga vad vi har om dig och få det rättat eller raderat. För Kattmat är det som mest ett mejl du skickat oss, och om du testar en beta det som TestFlight delar med oss (ovan). Du kan också klaga hos Integritetsskyddsmyndigheten (<a href="https://www.imy.se/">IMY</a>).</p>
+<h2 id="changes">Ändringar</h2>
+<p>Om Kattmat någon gång börjar hantera uppgifter på ett annat sätt ändras den här sidan först. Den får då ett nytt datum högst upp.</p>
 
-<h2>Ändringar</h2>
-<p>Om Kattmat någon gång börjar hantera uppgifter på ett annat sätt ändras den här sidan först, med ett nytt datum högst upp.</p>
-
-<h2>Vilka vi är</h2>
+<h2 id="who">Vilka vi är</h2>
 <p>Kattmat görs av Diliara Tazieva, Sverige. E-post: <a href="mailto:kattmat.app@icloud.com">kattmat.app@icloud.com</a></p>
+
+<footer>
+  <img class="pixel" src="data:image/png;base64,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" width="128" height="128" alt="Ruby hoprullad som en limpa">
+  <p><a href="../support/index.html">Support</a> <a href="../privacy/index.html" aria-current="page">Integritetspolicy</a></p>
+</footer>
+
+<script>
+(function () {
+  // The page's search: built here, so without JavaScript the page reads as before. Nothing is fetched.
+  // The pages' only script, which Di asked for: the privacy policy promises no tracking, so keep it inline and offline.
+  var T = {"one": "1 träff.", "many": "%d träffar, bäst först.", "open": "Sök", "close": "Stäng sökningen", "none": "Inget hittades för <q></q>. Skriv till oss på %m, så hjälper vi dig.", "lang": "sv", "label": "Sök i policyn", "placeholder": "Sök i policyn", "synonyms": [["kattvakt", "hundvakt", "djurvakt", "barnvakt", "passare"], ["partner", "make", "maka", "sambo", "familj"], ["kostar", "kostnad", "pris", "betala", "pengar", "kr", "€", "$", "dyr"], ["plan", "prenumeration", "köp", "provperiod", "för alltid", "per månad", "per år"], ["radera", "ta bort"], ["säkerhetskopi", "flytta", "ny telefon", "ny iphone", "återställ"], ["påminnelse", "notis", "avisering"], ["klar", "bocka", "markera"], ["widget", "hemskärm", "låsskärm"], ["återbetalning", "pengarna tillbaka", "köp"], ["avsluta", "säga upp", "sluta betala", "avbryt", "avsluta prenumeration"], ["mejl", "e-post", "mail", "meddelande", "kontakt", "skriv till oss", "skriver"]]};
+  var root = document.currentScript.parentElement;
+  // The bar sits before main, beside it in the same parent.
+  var bar = root.parentElement.querySelector(".topbar");
+  if (!bar) return;
+  var menu = bar.querySelector(".menu");
+  var row = bar.querySelector(".topbar-in");
+  var n = (window.kattmatSearch = (window.kattmatSearch || 0) + 1);
+
+  // How well a section answers a query, 0 when it doesn't. Every word of the query must match somewhere.
+  // Per word, the best of: the word in the section's heading (100), a synonym there (60), the word in a
+  // subheading (50), a synonym there (40), the word as a whole word in the text (20), a synonym (8),
+  // any part of a word (2). A few points for how often it comes up break ties.
+  function isWordChar(c) { return /[\p{L}\p{N}]/u.test(c); }
+  // Short words must match whole ("kr" isn't "kraschrapporter"); longer ones by their start, so
+  // "delete" finds "deleting". A sign like € or $ may run into its number.
+  function stem(term) { return term.length > 4 ? term.slice(0, Math.max(4, term.length - 2)) : term; }
+  function whole(term) { return term.length <= 3 && isWordChar(term[term.length - 1]); }
+  function count(text, term) {
+    var s = stem(term), n = 0, i = -1;
+    while ((i = text.indexOf(s, i + 1)) !== -1) {
+      if (i > 0 && isWordChar(text[i - 1])) continue;
+      if (whole(term) && i + s.length < text.length && isWordChar(text[i + s.length])) continue;
+      n++;
+    }
+    return n;
+  }
+  function words(s, lang) { return s.toLocaleLowerCase(lang).split(/\s+/).filter(Boolean); }
+  // A word a reader types, with the words it may mean: "walker" finds sitter, "spouse" finds partner.
+  function alternatives(w, T) {
+    var alts = [w];
+    T.synonyms.forEach(function (group) {
+      var hit = group.some(function (term) {
+        return w.length > 2 && words(term, T.lang).some(function (t) { return t.indexOf(w) === 0; });
+      });
+      if (hit) alts = alts.concat(group.filter(function (t) { return alts.indexOf(t) === -1; }));
+    });
+    return alts;
+  }
+  function score(section, query, T) {
+    var total = 0;
+    var all = section.heading + " " + section.subheadings + " " + section.text;
+    var each = words(query, T.lang).map(function (w) { return alternatives(w, T); });
+    for (var k = 0; k < each.length; k++) {
+      var alts = each[k], w = alts[0], others = alts.slice(1);
+      var any = function (text) { return others.some(function (a) { return count(text, a) > 0; }); };
+      var best =
+        count(section.heading, w) ? 100 : any(section.heading) ? 60 :
+        count(section.subheadings, w) ? 50 : any(section.subheadings) ? 40 :
+        count(section.text, w) ? 20 : any(section.text) ? 8 :
+        alts.some(function (a) { return all.indexOf(a) !== -1; }) ? 2 : 0;
+      if (!best) return 0;
+      var times = alts.reduce(function (n, a) { return n + count(all, a); }, 0);
+      total += best + Math.min(times, 5);
+    }
+    return total;
+  }
+  // Whether a click landed outside all of `inside`. It goes by the path the click took when it happened,
+  // so a click whose target has since left the page (an icon swapped out) still counts as inside.
+  function outside(event, inside) {
+    var path = event.composedPath ? event.composedPath() : [];
+    return !inside.some(function (el) { return path.indexOf(el) !== -1 || el.contains(event.target); });
+  }
+  function lower(s) { return s.toLocaleLowerCase(T.lang); }
+  function clean(s) { return s.replace(/\s+/g, " ").trim(); }
+
+  // Each h2 outside the cards starts a section, which runs to the next h2 or the footer.
+  var sections = [];
+  Array.prototype.forEach.call(root.querySelectorAll("h2[id]"), function (h) {
+    if (h.closest(".card, .toc")) return;
+    var parts = [];
+    for (var el = h.nextElementSibling; el && el.tagName !== "H2" && el.tagName !== "FOOTER" && el.tagName !== "SCRIPT"; el = el.nextElementSibling) parts.push(el);
+    var subs = parts.filter(function (p) { return p.tagName === "H3"; });
+    var body = clean(parts.filter(function (p) { return p.tagName !== "H3"; }).map(function (p) { return p.textContent; }).join(" "));
+    sections.push({
+      id: h.id,
+      title: clean(h.textContent),
+      body: body,
+      heading: lower(clean(h.textContent)),
+      subheadings: lower(subs.map(function (p) { return clean(p.textContent); }).join(" | ")),
+      text: lower(body),
+    });
+  });
+  if (!sections.length) return;
+
+  var glass = '<svg class="icon-open" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>';
+  var cross = '<svg class="icon-close" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
+  var toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "search-toggle";
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.setAttribute("aria-controls", "search" + n);
+  menu.appendChild(toggle);
+
+  // The panel opens over the page, under the bar, so nothing on the page moves.
+  var panel = document.createElement("div");
+  panel.className = "search-panel";
+  panel.id = "search" + n;
+  panel.setAttribute("role", "search");
+  panel.hidden = true;
+  panel.innerHTML =
+    '<label class="visually-hidden" for="q' + n + '">' + T.label + "</label>" +
+    '<input id="q' + n + '" type="search" autocomplete="off" spellcheck="false" placeholder="' + T.placeholder + '">' +
+    '<p class="search-status" role="status" aria-live="polite"></p>' +
+    '<ol class="results"></ol>';
+  row.appendChild(panel);
+  var input = panel.querySelector("input");
+  var status = panel.querySelector(".search-status");
+  var list = panel.querySelector(".results");
+
+  // Both icons stay in the button and CSS shows one, so the icon a click lands on is never swapped out.
+  toggle.innerHTML = glass + cross;
+  function setToggle(open) {
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? T.close : T.open);
+  }
+  setToggle(false);
+  function open() {
+    panel.hidden = false;
+    setToggle(true);
+    input.focus();
+    run();
+  }
+  function close(refocus) {
+    panel.hidden = true;
+    setToggle(false);
+    if (refocus) toggle.focus();
+  }
+  toggle.addEventListener("click", function () { if (panel.hidden) open(); else close(true); });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !panel.hidden) { event.preventDefault(); close(true); }
+  });
+  document.addEventListener("click", function (event) {
+    if (!panel.hidden && outside(event, [panel, toggle])) close(false);
+  });
+
+  function escape(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  // Puts text into an element with the matched words marked; the text stays text, never markup.
+  function marked(el, text, re) {
+    var from = 0;
+    if (re) {
+      re.lastIndex = 0;
+      text.replace(re, function (m, before, word, offset) {
+        var at = offset + before.length;
+        el.appendChild(document.createTextNode(text.slice(from, at)));
+        var hit = document.createElement("mark");
+        hit.className = "hit";
+        hit.textContent = word;
+        el.appendChild(hit);
+        from = at + word.length;
+      });
+    }
+    el.appendChild(document.createTextNode(text.slice(from)));
+  }
+  // A short piece of the answer around its first match.
+  function snippet(s, re) {
+    var at = 0;
+    if (re) {
+      re.lastIndex = 0;
+      var m = re.exec(s.body);
+      if (m) at = m.index + m[1].length;
+    }
+    var start = Math.max(0, at - 50);
+    var piece = s.body.slice(start, start + 150);
+    if (start > 0) piece = "…" + piece.replace(/^\S*\s/, "");
+    if (start + 150 < s.body.length) piece = piece.replace(/\s\S*$/, "") + "…";
+    return piece;
+  }
+
+  var timer;
+  function run() {
+    list.textContent = "";
+    var query = input.value.trim();
+    if (!query) { status.textContent = ""; return; }
+    // Best answer first; equal scores keep the page's order.
+    var ranked = sections.map(function (s, i) { return { s: s, i: i, score: score(s, query, T) }; })
+      .filter(function (r) { return r.score; })
+      .sort(function (a, b) { return b.score - a.score || a.i - b.i; });
+    // One-letter words still count, but aren't marked: every "a" would light up.
+    var terms = [];
+    words(query, T.lang).forEach(function (w) {
+      alternatives(w, T).forEach(function (a) { if (a.length > 1 && terms.indexOf(a) === -1) terms.push(a); });
+    });
+    var re = null;
+    if (terms.length) {
+      var pattern = terms.sort(function (a, b) { return b.length - a.length; }).map(function (t) {
+        return whole(t) ? escape(t) + "(?![\\p{L}\\p{N}])" : escape(stem(t)) + "[\\p{L}\\p{N}]*";
+      }).join("|");
+      re = new RegExp("(^|[^\\p{L}\\p{N}])(" + pattern + ")", "giu");
+    }
+    ranked.forEach(function (r) {
+      var item = document.createElement("li");
+      var link = document.createElement("a");
+      link.href = "#" + r.s.id;
+      var title = document.createElement("b");
+      marked(title, r.s.title, re);
+      var text = document.createElement("span");
+      marked(text, snippet(r.s, re), re);
+      link.appendChild(title);
+      link.appendChild(text);
+      link.addEventListener("click", function () { close(false); });
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+    if (ranked.length) {
+      status.textContent = ranked.length === 1 ? T.one : T.many.replace("%d", ranked.length);
+    } else {
+      status.innerHTML = T.none.replace("%m", '<a href="mailto:kattmat.app@icloud.com">kattmat.app@icloud.com</a>');
+      status.querySelector("q").textContent = query;
+    }
+  }
+  input.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(run, 200); });
+})();
+</script>
 </main>
 </body>
 </html>
